@@ -1,0 +1,11 @@
+[package]
+name = "fpass"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aes-gcm = "0.10.3"
+argon2 = "0.5.3"
+password-hash = "0.5.0"
+rand = "0.8"
+rand_core = "0.6"
