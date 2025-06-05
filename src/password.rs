@@ -2,7 +2,6 @@ use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
 };
-use rand::rngs::OsRng;
 
 pub fn derive_key(key: &[u8], salt: &[u8]) -> Vec<u8> {
     let salt_string = SaltString::encode_b64(salt).unwrap();
