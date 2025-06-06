@@ -22,11 +22,11 @@ fn main() {
             show(args[3].parse().unwrap(), args[2].as_bytes(), json_path);
         }
         "add" => {
-            let data_name = input("Data Name: ");
-            let email = input("Email: ");
-            let password = input("Password: ");
-            let notes = input("Notes: ");
-            let vaultpass = input("Master Password: ");
+            let data_name = input("Data Name");
+            let email = input("Email");
+            let password = input("Password");
+            let notes = input("Notes");
+            let vaultpass = input("Master Password");
             let entry_from_cli = add(
                 &json_path,
                 data_name.trim().to_string(),
