@@ -3,6 +3,8 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 
+use anyhow::{anyhow, Context, Result};
+
 use crate::password;
 
 /// Decryption with salt, nonce and password.
@@ -12,13 +14,13 @@ pub fn decrypt(
     salt: &[u8],
     nonce: &[u8],
     password: &[u8],
-) -> Option<Vec<u8>> {
+) -> Result<Vec<u8>> {
     let key = password::derive_key(password, &salt);
     let nonce_byte = Nonce::from_slice(&nonce);
     let cipher_key = Key::<Aes256Gcm>::from_slice(&key);
     let cipher = Aes256Gcm::new(cipher_key);
-    match cipher.decrypt(nonce_byte, data_encrypted) {
-        Ok(plain) => Some(plain),
-        Err(_) => None,
-    }
+
+    cipher
+        .decrypt(nonce_byte, data_encrypted)
+        .map_err(|e| anyhow!("Failed to decrypt data: {:?}", e))
 }

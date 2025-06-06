@@ -7,7 +7,7 @@ pub struct DataSchema {
     pub id: u8,
     pub nonce: Vec<u8>,
     pub salt: Vec<u8>,
-    pub data_name: Vec<u8>,
+    pub data_name: String,
     pub email: Vec<u8>,
     pub password: Vec<u8>,
     pub notes: Vec<u8>,
@@ -23,7 +23,7 @@ pub fn add_entry(
     id: u8,
     nonce: &[u8],
     salt: &[u8],
-    data_name: &[u8],
+    data_name: String,
     email: &[u8],
     password: &[u8],
     notes: &[u8],
@@ -37,7 +37,7 @@ pub fn add_entry(
         id,
         nonce: nonce.to_vec(),
         salt: salt.to_vec(),
-        data_name: data_name.to_vec(),
+        data_name: data_name,
         email: email.to_vec(),
         password: password.to_vec(),
         notes: notes.to_vec(),
@@ -48,7 +48,5 @@ pub fn add_entry(
 }
 
 // pub fn delete_entry(id: u8) {}
-
-// pub fn find_entry(id: u8) {}
 
 // pub fn change_entry(id: u8) {}

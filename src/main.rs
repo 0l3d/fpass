@@ -4,60 +4,53 @@ mod decrypt;
 mod encrypt;
 mod password;
 
-use std::fs::Metadata;
+use std::env;
 
+use cli::{add, find, input, list, show};
 use db::{add_entry, get_json, DataSchema};
 use decrypt::decrypt;
 use encrypt::encrypt;
 
 fn main() {
-    let password = b"zeroone";
+    let args: Vec<String> = env::args().collect();
 
-    let (data, salted, nonced) = encrypt(b"mydataisverysuccesful", password);
+    let json_path = "./db.json";
 
-    let entry_from_cli = DataSchema {
-        id: 1,
-        nonce: nonced,
-        salt: salted,
-        data_name: data,
-        email: b"hello".to_vec(),
-        password: b"mypas".to_vec(),
-        notes: b"mysorun".to_vec(),
-    };
-
-    /* let _ = add_entry(
-        entry_from_cli.id,
-        &entry_from_cli.nonce,
-        &entry_from_cli.salt,
-        &entry_from_cli.data_name,
-        &entry_from_cli.email,
-        &entry_from_cli.password,
-        &entry_from_cli.notes,
-        "./db.json",
-    ); */
-    match get_json("./db.json") {
-        Ok(data_vec) => {
-            for item in &data_vec {
-                let nonce = &item.nonce;
-                let salt = &item.salt;
-                let id = item.id;
-                let data_name = &item.data_name;
-                let email = &item.email;
-                let password = &item.password;
-                let notes = &item.notes;
-                let passwords = b"zeroone";
-
-                match decrypt(data_name, &salt, &nonce, passwords) {
-                    Some(plaintext) => {
-                        let plain = String::from_utf8(plaintext).expect("Geçersiz UTF-8 verisi");
-                        println!("{}", plain);
-                    }
-                    None => {}
-                }
-            }
+    match args[1].as_str() {
+        "list" => {
+            list(json_path);
         }
-        Err(e) => {
-            println!("{}", e);
+        "show" => {
+            show(args[3].parse().unwrap(), args[2].as_bytes(), json_path);
         }
+        "add" => {
+            let data_name = input("Data Name: ");
+            let email = input("Email: ");
+            let password = input("Password: ");
+            let notes = input("Notes: ");
+            let vaultpass = input("Master Password: ");
+            let entry_from_cli = add(
+                &json_path,
+                data_name.trim().to_string(),
+                email.trim().as_bytes(),
+                password.trim().as_bytes(),
+                notes.trim().as_bytes(),
+                vaultpass.trim().as_bytes(),
+            );
+            let _ = add_entry(
+                entry_from_cli.id,
+                &entry_from_cli.nonce,
+                &entry_from_cli.salt,
+                entry_from_cli.data_name,
+                &entry_from_cli.email,
+                &entry_from_cli.password,
+                &entry_from_cli.notes,
+                &json_path,
+            );
+        }
+        "find" => {
+            find(args[2].to_string(), &json_path);
+        }
+        _ => println!("Command not found {}", args[1]),
     }
 }
