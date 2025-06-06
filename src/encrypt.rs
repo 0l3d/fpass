@@ -1,8 +1,7 @@
 use aes_gcm::{
-    aead::{Aead, KeyInit, OsRng},
+    aead::{Aead, KeyInit},
     Aes256Gcm, Key, Nonce,
 };
-use rand::RngCore;
 
 use crate::password;
 

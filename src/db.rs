@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_json::{from_str, json, to_string_pretty};
+use serde_json::{from_str, to_string_pretty};
 use std::fs::{read_to_string, write};
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -37,7 +37,7 @@ pub fn add_entry(
         id,
         nonce: nonce.to_vec(),
         salt: salt.to_vec(),
-        data_name: data_name,
+        data_name,
         email: email.to_vec(),
         password: password.to_vec(),
         notes: notes.to_vec(),

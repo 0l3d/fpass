@@ -7,9 +7,7 @@ mod password;
 use std::env;
 
 use cli::{add, find, input, list, show};
-use db::{add_entry, get_json, DataSchema};
-use decrypt::decrypt;
-use encrypt::encrypt;
+use db::add_entry;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

@@ -18,7 +18,7 @@ pub fn add(
     let mut id: u8 = 0;
     match get_json(json_path) {
         Ok(data_vec) => {
-            for item in &data_vec {
+            for _item in &data_vec {
                 id += 1;
             }
         }
@@ -33,24 +33,24 @@ pub fn add(
     let mut salt = [0u8; 16];
     OsRng.fill_bytes(&mut salt);
 
-    let emailEnc = encrypt(&email, &vaultpass, &salt, &nonce);
-    let passwordEnc = encrypt(&password, &vaultpass, &salt, &nonce);
-    let notesEnc = encrypt(&notes, &vaultpass, &salt, &nonce);
+    let email_enc = encrypt(&email, &vaultpass, &salt, &nonce);
+    let password_enc = encrypt(&password, &vaultpass, &salt, &nonce);
+    let notes_enc = encrypt(&notes, &vaultpass, &salt, &nonce);
 
     let entry_from_cli = DataSchema {
         id,
         nonce: nonce.to_vec(),
         salt: salt.to_vec(),
         data_name,
-        email: emailEnc.to_vec(),
-        password: passwordEnc.to_vec(),
-        notes: notesEnc.to_vec(),
+        email: email_enc.to_vec(),
+        password: password_enc.to_vec(),
+        notes: notes_enc.to_vec(),
     };
 
     return entry_from_cli;
 }
 
-pub fn show(Argid: u8, vaultpass: &[u8], json_path: &str) {
+pub fn show(argid: u8, vaultpass: &[u8], json_path: &str) {
     match get_json(json_path) {
         Ok(data_vec) => {
             for item in &data_vec {
@@ -62,7 +62,7 @@ pub fn show(Argid: u8, vaultpass: &[u8], json_path: &str) {
                 let password = &item.password;
                 let notes = &item.notes;
 
-                if id == Argid {
+                if id == argid {
                     println!("ID: {}", id);
                     println!("Data Name : {}", data_name);
                     match decrypt(&email, &salt, &nonce, &vaultpass) {
