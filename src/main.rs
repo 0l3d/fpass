@@ -7,7 +7,7 @@ mod password;
 use std::env;
 
 use cli::{add, find, input, list, show};
-use db::add_entry;
+use db::{add_entry, delete_entry};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -48,6 +48,9 @@ fn main() {
         }
         "find" => {
             find(args[2].to_string(), &json_path);
+        }
+        "delete" => {
+            let _ = delete_entry(args[2].parse().unwrap(), &json_path);
         }
         _ => println!("Command not found {}", args[1]),
     }

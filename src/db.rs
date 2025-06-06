@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
-use std::fs::{read_to_string, write};
+use std::fs::{self, read_to_string, write};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DataSchema {
@@ -47,6 +47,18 @@ pub fn add_entry(
     Ok(())
 }
 
-// pub fn delete_entry(id: u8) {}
+pub fn delete_entry(id: u8, json_path: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    let file = read_to_string(json_path)?;
+    let mut entries: Vec<DataSchema> = from_str(&file)?;
+    let original_len = entries.len();
+    entries.retain(|entry| entry.id != id);
+    if entries.len() < original_len {
+        let updated_json = serde_json::to_string_pretty(&entries)?;
+        fs::write(json_path, updated_json)?;
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
 
 // pub fn change_entry(id: u8) {}

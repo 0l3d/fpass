@@ -103,7 +103,6 @@ pub fn show(argid: u8, vaultpass: &[u8], json_path: &str) {
 
 // TODO
 // pub fn edit(id: u8, json_path: &str) {}
-// pub fn delete(id: u8, json_path: &str) {}
 
 pub fn find(data_name: String, json_path: &str) {
     match get_json(json_path) {
