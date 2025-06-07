@@ -29,7 +29,7 @@ fpass - CLI Password Manager
 fpass [command] [Vault Password] [arguments]
 
 How to setup main database?
-fpass setup <name> (~/.local/share/fpass/db.json)
+fpass setup (~/.local/share/fpass/db.json)
 
 How to list?
 fpass list
