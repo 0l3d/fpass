@@ -12,7 +12,7 @@ You can compile `fpass` from source without using `cargo install`.
 ### 🧾 1. Clone the repository
 
 ```sh
-git clone https://your.repo/fpass.git
+git clone https://github.com/0l3d/fpass.git
 cd fpass
 ```
 
