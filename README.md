@@ -136,7 +136,8 @@ All data is stored in:
 
 ## 📄 License
 
-📝 MIT License – do whatever you want, but at your own risk.
+📝 Licensed under the GNU General Public License v3.0 (GPL-3.0).You are free to use, modify, and distribute this software under the terms of the GPLv3.
+See the LICENSE file for full details.
 
 ---
 
