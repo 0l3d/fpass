@@ -26,7 +26,7 @@ fn main() {
                 "
 fpass - CLI Password Manager
 
-fpass [command] [Vault Password] [arguments]
+fpass [command] [arguments]
 
 How to setup main database?
 fpass setup (~/.local/share/fpass/db.json)

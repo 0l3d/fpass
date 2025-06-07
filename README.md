@@ -57,7 +57,7 @@ This will initialize your encrypted password database at:
 ## 🧭 Command Overview
 
 ```bash
-fpass [command] [Vault Password] [arguments]
+fpass [command] [arguments]
 ```
 
 ### 📂 List all entries
