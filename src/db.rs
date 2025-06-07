@@ -31,7 +31,7 @@ pub fn add_entry(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut entries: Vec<DataSchema> = match read_to_string(file_path) {
         Ok(content) => from_str(&content).unwrap_or_else(|_| Vec::new()),
-        Err(_) => Vec::new(),
+        Err(e) => Vec::new(),
     };
     entries.push(DataSchema {
         id,
@@ -60,5 +60,3 @@ pub fn delete_entry(id: u8, json_path: &str) -> Result<bool, Box<dyn std::error:
         Ok(false)
     }
 }
-
-// pub fn change_entry(id: u8) {}
