@@ -18,31 +18,26 @@ pub fn add(
     vaultpass: &[u8],
 ) -> Result<DataSchema> {
     let mut id: u8 = 0;
-    let data_vec = get_json(json_path)
-        .map_err(|e| anyhow!("Error accessing database: {}", e))?;
-    
+    let data_vec = get_json(json_path).map_err(|e| anyhow!("Error accessing database: {}", e))?;
+
     for _item in &data_vec {
         id += 1;
     }
     id += 1;
-    
+
     let mut salt = [0u8; 16];
     OsRng.fill_bytes(&mut salt);
 
-    let mut email_nonce = [0u8; 12];
-    OsRng.fill_bytes(&mut email_nonce);
-    let mut password_nonce = [0u8; 12];
-    OsRng.fill_bytes(&mut password_nonce);
-    let mut notes_nonce = [0u8; 12];
-    OsRng.fill_bytes(&mut notes_nonce);
+    let mut nonce = [0u8; 12];
+    OsRng.fill_bytes(&mut nonce);
 
-    let email_enc = encrypt(&email, &vaultpass, &salt, &email_nonce)?;
-    let password_enc = encrypt(&password, &vaultpass, &salt, &password_nonce)?;
-    let notes_enc = encrypt(&notes, &vaultpass, &salt, &notes_nonce)?;
+    let email_enc = encrypt(&email, &vaultpass, &salt, &nonce)?;
+    let password_enc = encrypt(&password, &vaultpass, &salt, &nonce)?;
+    let notes_enc = encrypt(&notes, &vaultpass, &salt, &nonce)?;
 
     let entry_from_cli = DataSchema {
         id,
-        nonce: email_nonce.to_vec(),
+        nonce: nonce.to_vec(),
         salt: salt.to_vec(),
         data_name,
         email: email_enc.to_vec(),
@@ -112,18 +107,12 @@ pub fn show(argid: u8, vaultpass: &[u8], json_path: &str, passhid: bool) -> Resu
 
     Ok(())
 }
-pub fn copy(
-    argid: u8,
-    vaultpass: &[u8],
-    which: &str,
-    json_path: &str,
-) -> Result<()> {
-    let data_vec = get_json(json_path)
-        .map_err(|e| anyhow!("Error reading JSON: {}", e))?;
-    
-    let mut clip = arboard::Clipboard::new()
-        .map_err(|e| anyhow!("Failed to access clipboard: {}", e))?;
-    
+pub fn copy(argid: u8, vaultpass: &[u8], which: &str, json_path: &str) -> Result<()> {
+    let data_vec = get_json(json_path).map_err(|e| anyhow!("Error reading JSON: {}", e))?;
+
+    let mut clip =
+        arboard::Clipboard::new().map_err(|e| anyhow!("Failed to access clipboard: {}", e))?;
+
     for item in &data_vec {
         let nonce = &item.nonce;
         let salt = &item.salt;
@@ -149,21 +138,21 @@ pub fn copy(
                     .map_err(|e| anyhow!("Failed to copy to clipboard: {}", e))?;
                 println!("Password is successfully copied.");
             } else {
-                return Err(anyhow!("Invalid option: {}. Use 'email' or 'password'", which));
+                return Err(anyhow!(
+                    "Invalid option: {}. Use 'email' or 'password'",
+                    which
+                ));
             }
             return Ok(());
         }
     }
-    
+
     Err(anyhow!("Entry with ID {} not found", argid))
 }
 
-
-
 pub fn find(data_name: String, json_path: &str) -> Result<()> {
-    let data_vec = get_json(json_path)
-        .map_err(|e| anyhow!("Error accessing database: {}", e))?;
-    
+    let data_vec = get_json(json_path).map_err(|e| anyhow!("Error accessing database: {}", e))?;
+
     let mut found = false;
     for item in &data_vec {
         let data_namenoenc = &item.data_name;
@@ -173,20 +162,17 @@ pub fn find(data_name: String, json_path: &str) -> Result<()> {
             found = true;
         }
     }
-    
+
     if !found {
         println!("No entries found with name: {}", data_name);
     }
-    
+
     Ok(())
 }
 
-
-
 pub fn list(json_path: &str) -> Result<()> {
-    let data_vec = get_json(json_path)
-        .map_err(|e| anyhow!("Error accessing database: {}", e))?;
-    
+    let data_vec = get_json(json_path).map_err(|e| anyhow!("Error accessing database: {}", e))?;
+
     if data_vec.is_empty() {
         println!("No entries found in the database.");
     } else {
@@ -197,8 +183,44 @@ pub fn list(json_path: &str) -> Result<()> {
             println!("[{}] {}", id, data_name);
         }
     }
-    
+
     Ok(())
+}
+
+pub fn help_message() -> String {
+    let message = r#"
+fpass - CLI Password Manager
+
+Usage:
+fpass [command] [arguments]
+
+How to set up the main database?
+fpass setup
+(The database will be created at ~/.local/share/fpass/db.json)
+
+How to list all entries?
+fpass list
+
+How to show an entry?
+fpass show <id>
+(Password is hidden)
+fpass shown <id>
+(Password is visible)
+
+How to add a new entry?
+fpass add
+
+How to find an entry?
+fpass find <entry_name>
+
+How to delete an entry?
+fpass delete <id>
+
+How to copy an entry? (Not available yet)
+fpass copy <id> <password/email>
+    "#;
+
+    message.to_string()
 }
 
 pub fn input(prompt: &str) -> Result<String> {

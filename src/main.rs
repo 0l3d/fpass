@@ -12,7 +12,7 @@ use std::{
 };
 
 use anyhow::{Result, anyhow};
-use cli::{add, copy, find, input, list, master_input, show};
+use cli::{add, copy, find, help_message, input, list, master_input, show};
 use db::{add_entry, delete_entry};
 
 fn main() -> Result<()> {
@@ -29,38 +29,7 @@ fn main() -> Result<()> {
 
     match args[1].as_str() {
         "help" => {
-            println!(
-                "
-fpass - CLI Password Manager
-
-Usage:
-fpass [command] [arguments]
-
-How to set up the main database?
-fpass setup
-(The database will be created at ~/.local/share/fpass/db.json)
-
-How to list all entries?
-fpass list
-
-How to show an entry?
-fpass show <id>
-(Password is hidden)
-fpass shown <id>
-(Password is visible)
-
-How to add a new entry?
-fpass add
-
-How to find an entry?
-fpass find <entry_name>
-
-How to delete an entry?
-fpass delete <id>
-
-How to copy an entry? (Not available yet)
-fpass copy <id> <password/email>                "
-            );
+            println!("{}", help_message());
         }
         "setup" => {
             let mut db_path = PathBuf::from(home_dir);
