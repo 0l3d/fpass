@@ -1,11 +1,11 @@
-use std::io::{self, Write, stdin, stdout};
+use std::io::{self, stdin, stdout, Write};
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use rand::RngCore;
 use rand_core::OsRng;
 use rpassword::read_password;
 
-use crate::db::{DataSchema, get_json};
+use crate::db::{get_json, DataSchema};
 use crate::decrypt::decrypt;
 use crate::encrypt::encrypt;
 
@@ -56,13 +56,13 @@ fn decrypt_things(
     notes: &[u8],
     vaultpass: &[u8],
 ) -> Result<(Vec<u8>, Vec<u8>, Vec<u8>)> {
-    let email_vec = decrypt(&email, &salt, &nonce, &vaultpass)
+    let email_vec = decrypt(email, salt, nonce, vaultpass)
         .map_err(|e| anyhow!("Failed to decrypt email: {}", e))?;
 
-    let password_vec = decrypt(&password, &salt, &nonce, &vaultpass)
+    let password_vec = decrypt(password, salt, nonce, vaultpass)
         .map_err(|e| anyhow!("Failed to decrypt password: {}", e))?;
 
-    let notes_vec = decrypt(&notes, &salt, &nonce, &vaultpass)
+    let notes_vec = decrypt(notes, salt, nonce, vaultpass)
         .map_err(|e| anyhow!("Failed to decrypt notes: {}", e))?;
 
     Ok((email_vec, password_vec, notes_vec))

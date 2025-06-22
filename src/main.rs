@@ -6,13 +6,13 @@ mod password;
 
 use std::{
     env,
-    fs::{File, create_dir_all},
+    fs::{create_dir_all, File},
     io::Write,
     path::PathBuf,
 };
 
-use anyhow::{Result, anyhow};
-use cli::{add, copy, find, help_message, input, list, master_input, show};
+use anyhow::{anyhow, Result};
+use cli::{add, copy, find, input, list, master_input, show};
 use db::{add_entry, delete_entry};
 
 fn main() -> Result<()> {
@@ -29,7 +29,38 @@ fn main() -> Result<()> {
 
     match args[1].as_str() {
         "help" => {
-            println!("{}", help_message());
+            println!(
+                "
+fpass - CLI Password Manager
+
+Usage:
+fpass [command] [arguments]
+
+How to set up the main database?
+fpass setup
+(The database will be created at ~/.local/share/fpass/db.json)
+
+How to list all entries?
+fpass list
+
+How to show an entry?
+fpass show <id>
+(Password is hidden)
+fpass shown <id>
+(Password is visible)
+
+How to add a new entry?
+fpass add
+
+How to find an entry?
+fpass find <entry_name>
+
+How to delete an entry?
+fpass delete <id>
+
+How to copy an entry? (Not available yet)
+fpass copy <id> <password/email>                "
+            );
         }
         "setup" => {
             let mut db_path = PathBuf::from(home_dir);
@@ -43,7 +74,7 @@ fn main() -> Result<()> {
             if !db_path.exists() {
                 let mut file =
                     File::create(&db_path).map_err(|e| anyhow!("Failed to create file: {}", e))?;
-                file.write_all(b"{}")
+                file.write_all(b"[]")
                     .map_err(|e| anyhow!("Failed to write to file: {}", e))?;
             } else {
                 println!("File exists: {}", db_path.display());

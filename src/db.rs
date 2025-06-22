@@ -15,8 +15,8 @@ pub struct DataSchema {
 }
 
 pub fn get_json(path: &str) -> Result<Vec<DataSchema>> {
-    let json_file = read_to_string(&path)
-        .map_err(|e| anyhow!("Failed to read file {}: {}", path, e))?;
+    let json_file =
+        read_to_string(&path).map_err(|e| anyhow!("Failed to read file {}: {}", path, e))?;
     let parsed = from_str::<Vec<DataSchema>>(&json_file)
         .map_err(|e| anyhow!("Failed to parse JSON: {}", e))?;
     Ok(parsed)
@@ -47,18 +47,17 @@ pub fn add_entry(
         password: password.to_vec(),
         notes: notes.to_vec(),
     });
-    let json = to_string_pretty(&entries)
-        .map_err(|e| anyhow!("Failed to serialize entries: {}", e))?;
-    write(file_path, &json)
-        .map_err(|e| anyhow!("Failed to write to file {}: {}", file_path, e))?;
+    let json =
+        to_string_pretty(&entries).map_err(|e| anyhow!("Failed to serialize entries: {}", e))?;
+    write(file_path, &json).map_err(|e| anyhow!("Failed to write to file {}: {}", file_path, e))?;
     Ok(())
 }
 
 pub fn delete_entry(id: u8, json_path: &str) -> Result<bool> {
     let file = read_to_string(json_path)
         .map_err(|e| anyhow!("Failed to read file {}: {}", json_path, e))?;
-    let mut entries: Vec<DataSchema> = from_str(&file)
-        .map_err(|e| anyhow!("Failed to parse JSON: {}", e))?;
+    let mut entries: Vec<DataSchema> =
+        from_str(&file).map_err(|e| anyhow!("Failed to parse JSON: {}", e))?;
     let original_len = entries.len();
     entries.retain(|entry| entry.id != id);
     if entries.len() < original_len {
