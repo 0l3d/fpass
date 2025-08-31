@@ -1,11 +1,16 @@
-use std::io::{self, stdin, stdout, Write};
+use std::{
+    io::{self, Write, stdin, stdout},
+    thread,
+    time::Duration,
+};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
+use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use rand::RngCore;
 use rand_core::OsRng;
 use rpassword::read_password;
 
-use crate::db::{get_json, DataSchema};
+use crate::db::{DataSchema, get_json};
 use crate::decrypt::decrypt;
 use crate::encrypt::encrypt;
 
@@ -81,8 +86,8 @@ pub fn show(argid: u8, vaultpass: &[u8], json_path: &str, passhid: bool) -> Resu
         let notes = &item.notes;
 
         if id == argid {
-            println!("ID: {}", id);
-            println!("Data Name: {}", data_name);
+            println!("ID: {id}");
+            println!("Data Name: {data_name}");
             let (email, password, notes) =
                 decrypt_things(email, salt, nonce, password, notes, vaultpass)?;
 
@@ -95,13 +100,13 @@ pub fn show(argid: u8, vaultpass: &[u8], json_path: &str, passhid: bool) -> Resu
             let notes_str =
                 String::from_utf8(notes).map_err(|e| anyhow!("Invalid UTF-8 in notes: {}", e))?;
 
-            println!("Email: {}", email_str);
+            println!("Email: {email_str}");
             if passhid {
-                println!("Password: |\x1b[8m{}\x1b[0m|", password_str);
+                println!("Password: |\x1b[8m{password_str}\x1b[0m|");
             } else {
-                println!("Password: {}", password_str);
+                println!("Password: {password_str}");
             }
-            println!("Notes: {}", notes_str);
+            println!("Notes: {notes_str}");
         }
     }
 
@@ -111,7 +116,7 @@ pub fn copy(argid: u8, vaultpass: &[u8], which: &str, json_path: &str) -> Result
     let data_vec = get_json(json_path).map_err(|e| anyhow!("Error reading JSON: {}", e))?;
 
     let mut clip =
-        arboard::Clipboard::new().map_err(|e| anyhow!("Failed to access clipboard: {}", e))?;
+        ClipboardContext::new().map_err(|e| anyhow!("Failed to access clipboard: {}", e))?;
 
     for item in &data_vec {
         let nonce = &item.nonce;
@@ -128,15 +133,29 @@ pub fn copy(argid: u8, vaultpass: &[u8], which: &str, json_path: &str) -> Result
             if which == "email" {
                 let email_str = String::from_utf8(emaila)
                     .map_err(|e| anyhow!("Invalid UTF-8 in email: {}", e))?;
-                clip.set_text(email_str)
+                clip.set_contents(email_str)
                     .map_err(|e| anyhow!("Failed to copy to clipboard: {}", e))?;
-                println!("Email is successfully copied.");
+                println!("Clipboard content will be deleted after 15 seconds...");
+                for i in (1..=15).rev() {
+                    print!("{i}");
+                    use std::io::{Write, stdout};
+                    stdout().flush().unwrap();
+
+                    thread::sleep(Duration::from_secs(1));
+                }
             } else if which == "password" {
                 let password_str = String::from_utf8(passworda)
                     .map_err(|e| anyhow!("Invalid UTF-8 in password: {}", e))?;
-                clip.set_text(password_str)
-                    .map_err(|e| anyhow!("Failed to copy to clipboard: {}", e))?;
-                println!("Password is successfully copied.");
+                println!("Clipboard content will be deleted after 15 seconds...");
+                for i in (1..=15).rev() {
+                    clip.set_contents(password_str.clone())
+                        .map_err(|e| anyhow!("Failed to copy to clipboard: {}", e))?;
+                    print!("{i} ");
+                    use std::io::{Write, stdout};
+                    stdout().flush().unwrap();
+
+                    thread::sleep(Duration::from_secs(1));
+                }
             } else {
                 return Err(anyhow!(
                     "Invalid option: {}. Use 'email' or 'password'",
@@ -158,13 +177,13 @@ pub fn find(data_name: String, json_path: &str) -> Result<()> {
         let data_namenoenc = &item.data_name;
         let id = item.id;
         if data_namenoenc == &data_name {
-            println!("Found ID: [{}] {}", id, data_namenoenc);
+            println!("Found ID: [{id}] {data_namenoenc}");
             found = true;
         }
     }
 
     if !found {
-        println!("No entries found with name: {}", data_name);
+        println!("No entries found with name: {data_name}");
     }
 
     Ok(())
@@ -180,51 +199,15 @@ pub fn list(json_path: &str) -> Result<()> {
             let id = item.id;
             let data_name = &item.data_name;
 
-            println!("[{}] {}", id, data_name);
+            println!("[{id}] {data_name}");
         }
     }
 
     Ok(())
 }
 
-pub fn help_message() -> String {
-    let message = r#"
-fpass - CLI Password Manager
-
-Usage:
-fpass [command] [arguments]
-
-How to set up the main database?
-fpass setup
-(The database will be created at ~/.local/share/fpass/db.json)
-
-How to list all entries?
-fpass list
-
-How to show an entry?
-fpass show <id>
-(Password is hidden)
-fpass shown <id>
-(Password is visible)
-
-How to add a new entry?
-fpass add
-
-How to find an entry?
-fpass find <entry_name>
-
-How to delete an entry?
-fpass delete <id>
-
-How to copy an entry? (Not available yet)
-fpass copy <id> <password/email>
-    "#;
-
-    message.to_string()
-}
-
 pub fn input(prompt: &str) -> Result<String> {
-    print!("{}: ", prompt);
+    print!("{prompt}: ");
     stdout()
         .flush()
         .map_err(|e| anyhow!("Failed to flush stdout: {}", e))?;
@@ -236,7 +219,7 @@ pub fn input(prompt: &str) -> Result<String> {
 }
 
 pub fn master_input(prompt: &str) -> Result<String> {
-    print!("{}", prompt);
+    print!("{prompt}");
     io::stdout()
         .flush()
         .map_err(|e| anyhow!("Failed to flush stdout: {}", e))?;

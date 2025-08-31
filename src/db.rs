@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
 use std::fs::{self, read_to_string, write};

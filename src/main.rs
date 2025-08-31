@@ -5,65 +5,73 @@ mod encrypt;
 mod password;
 
 use std::{
-    env,
-    fs::{create_dir_all, File},
+    fs::{File, create_dir_all},
     io::Write,
     path::PathBuf,
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
+use clap::{Parser, Subcommand};
 use cli::{add, copy, find, input, list, master_input, show};
 use db::{add_entry, delete_entry};
 
-fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
+#[derive(Parser, Debug)]
+#[command(name = "fpass", version, about = "CLI Password Manager")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
 
-    if args.len() < 2 {
-        println!("Usage: fpass [command] [arguments]");
-        println!("Try 'fpass help' for more information");
-        return Ok(());
-    }
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Set up the main database
+    Setup,
+    /// List all entries
+    List,
+    /// Show an entry (password hidden)
+    Show {
+        /// ID of the entry
+        id: u8,
+    },
+    /// Show an entry (password visible)
+    Shown {
+        /// ID of the entry
+        id: u8,
+    },
+    /// Add a new entry
+    Add,
+    /// Find an entry by name
+    Find {
+        /// Entry name
+        entry_name: String,
+    },
+    /// Delete an entry
+    Delete {
+        /// ID of the entry
+        id: u8,
+    },
+    /// Copy an entry field to clipboard (not yet implemented)
+    Copy {
+        /// ID of the entry
+        id: u8,
+        /// Field to copy (password/email)
+        field: String,
+    },
+    // Edit an entry field.
+    Edit {
+        id: u8,
+    },
+}
+
+fn main() -> Result<()> {
+    let cli = Cli::parse();
 
     let home_dir = dirs::home_dir().ok_or_else(|| anyhow!("Failed to get home directory"))?;
     let json_path = format!("{}/.local/share/fpass/db.json", home_dir.display());
 
-    match args[1].as_str() {
-        "help" => {
-            println!(
-                "
-fpass - CLI Password Manager
-
-Usage:
-fpass [command] [arguments]
-
-How to set up the main database?
-fpass setup
-(The database will be created at ~/.local/share/fpass/db.json)
-
-How to list all entries?
-fpass list
-
-How to show an entry?
-fpass show <id>
-(Password is hidden)
-fpass shown <id>
-(Password is visible)
-
-How to add a new entry?
-fpass add
-
-How to find an entry?
-fpass find <entry_name>
-
-How to delete an entry?
-fpass delete <id>
-
-How to copy an entry? (Not available yet)
-fpass copy <id> <password/email>                "
-            );
-        }
-        "setup" => {
-            let mut db_path = PathBuf::from(home_dir);
+    match cli.command {
+        Commands::Setup => {
+            let mut db_path = PathBuf::from(&home_dir);
             db_path.push(".local/share/fpass/db.json");
 
             if let Some(parent_dir) = db_path.parent() {
@@ -80,39 +88,18 @@ fpass copy <id> <password/email>                "
                 println!("File exists: {}", db_path.display());
             }
         }
-        "list" => {
-            list(&json_path).map_err(|e| {
-                eprintln!("Error listing entries: {}", e);
-                e
-            })?;
+        Commands::List => {
+            list(&json_path)?;
         }
-        "show" => {
-            if args.len() < 3 {
-                return Err(anyhow!("Missing ID argument"));
-            }
+        Commands::Show { id } => {
             let password = master_input("Master Password: ")?;
-            let id = args[2]
-                .parse::<u8>()
-                .map_err(|e| anyhow!("Invalid ID: {}", e))?;
-            show(id, password.as_bytes(), &json_path, true).map_err(|e| {
-                eprintln!("Error showing entry: {}", e);
-                e
-            })?;
+            show(id, password.as_bytes(), &json_path, true)?;
         }
-        "shown" => {
-            if args.len() < 3 {
-                return Err(anyhow!("Missing ID argument"));
-            }
+        Commands::Shown { id } => {
             let password = master_input("Master Password: ")?;
-            let id = args[2]
-                .parse::<u8>()
-                .map_err(|e| anyhow!("Invalid ID: {}", e))?;
-            show(id, password.as_bytes(), &json_path, false).map_err(|e| {
-                eprintln!("Error showing entry: {}", e);
-                e
-            })?;
+            show(id, password.as_bytes(), &json_path, false)?;
         }
-        "add" => {
+        Commands::Add => {
             let data_name = input("Data Name")?;
             let email = input("Email")?;
             let password = input("Password")?;
@@ -125,11 +112,7 @@ fpass copy <id> <password/email>                "
                 password.trim().as_bytes(),
                 notes.trim().as_bytes(),
                 vaultpass.trim().as_bytes(),
-            )
-            .map_err(|e| {
-                eprintln!("Error adding entry: {}", e);
-                e
-            })?;
+            )?;
             add_entry(
                 entry_from_cli.id,
                 &entry_from_cli.nonce,
@@ -139,49 +122,19 @@ fpass copy <id> <password/email>                "
                 &entry_from_cli.password,
                 &entry_from_cli.notes,
                 &json_path,
-            )
-            .map_err(|e| {
-                eprintln!("Error saving entry: {}", e);
-                e
-            })?;
+            )?;
         }
-        "find" => {
-            if args.len() < 3 {
-                return Err(anyhow!("Missing entry name argument"));
-            }
-            find(args[2].to_string(), &json_path).map_err(|e| {
-                eprintln!("Error finding entry: {}", e);
-                e
-            })?;
+        Commands::Find { entry_name } => {
+            find(entry_name, &json_path)?;
         }
-        "delete" => {
-            if args.len() < 3 {
-                return Err(anyhow!("Missing ID argument"));
-            }
-            let id = args[2]
-                .parse::<u8>()
-                .map_err(|e| anyhow!("Invalid ID: {}", e))?;
-            delete_entry(id, &json_path).map_err(|e| {
-                eprintln!("Error deleting entry: {}", e);
-                e
-            })?;
+        Commands::Delete { id } => {
+            delete_entry(id, &json_path)?;
         }
-        "copy" => {
-            if args.len() < 4 {
-                return Err(anyhow!(
-                    "Missing arguments. Usage: fpass copy <id> <password/email>"
-                ));
-            }
+        Commands::Copy { id, field } => {
             let password = master_input("Master Password: ")?;
-            let id = args[2]
-                .parse::<u8>()
-                .map_err(|e| anyhow!("Invalid ID: {}", e))?;
-            copy(id, password.as_bytes(), &args[3], &json_path).map_err(|e| {
-                eprintln!("Error copying entry: {}", e);
-                e
-            })?;
+            copy(id, password.as_bytes(), &field, &json_path)?;
         }
-        _ => println!("Command not found {}", args[1]),
+        Commands::Edit { id } => {}
     }
 
     Ok(())
