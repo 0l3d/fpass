@@ -1,16 +1,16 @@
 use std::{
-    io::{self, Write, stdin, stdout},
+    io::{self, stdin, stdout, Write},
     thread,
     time::Duration,
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use rand::RngCore;
 use rand_core::OsRng;
 use rpassword::read_password;
 
-use crate::db::{DataSchema, get_json};
+use crate::db::{edit_entry, get_json, DataSchema};
 use crate::decrypt::decrypt;
 use crate::encrypt::encrypt;
 
@@ -36,9 +36,9 @@ pub fn add(
     let mut nonce = [0u8; 12];
     OsRng.fill_bytes(&mut nonce);
 
-    let email_enc = encrypt(&email, &vaultpass, &salt, &nonce)?;
-    let password_enc = encrypt(&password, &vaultpass, &salt, &nonce)?;
-    let notes_enc = encrypt(&notes, &vaultpass, &salt, &nonce)?;
+    let email_enc = encrypt(email, vaultpass, &salt, &nonce)?;
+    let password_enc = encrypt(password, vaultpass, &salt, &nonce)?;
+    let notes_enc = encrypt(notes, vaultpass, &salt, &nonce)?;
 
     let entry_from_cli = DataSchema {
         id,
@@ -51,6 +51,61 @@ pub fn add(
     };
 
     Ok(entry_from_cli)
+}
+
+pub fn edit(argid: u8, vaultpass: &[u8], json_path: &str) -> Result<DataSchema> {
+    let data_vec = get_json(json_path).map_err(|e| anyhow!("Error reading JSON: {}", e))?;
+
+    for item in data_vec.iter() {
+        if item.id != argid {
+            continue;
+        }
+
+        let (email, password, notes) = decrypt_things(
+            &item.email,
+            &item.salt,
+            &item.nonce,
+            &item.password,
+            &item.notes,
+            vaultpass,
+        )?;
+
+        let email_str = String::from_utf8(email)?;
+        let password_str = String::from_utf8(password)?;
+        let notes_str = String::from_utf8(notes)?;
+
+        let new_data = input(&format!("Data Name [{}]", item.data_name))?;
+        let new_email = input(&format!("Email [{email_str}]"))?;
+        let new_password = input(&format!("Password [{password_str}]"))?;
+        let new_notes = input(&format!("Notes [{notes_str}]"))?;
+
+        let mut salt = [0u8; 16];
+        OsRng.fill_bytes(&mut salt);
+
+        let mut nonce = [0u8; 12];
+        OsRng.fill_bytes(&mut nonce);
+
+        let email_enc = encrypt(new_email.trim().as_bytes(), vaultpass, &salt, &nonce)?;
+        let password_enc = encrypt(new_password.trim().as_bytes(), vaultpass, &salt, &nonce)?;
+        let notes_enc = encrypt(new_notes.trim().as_bytes(), vaultpass, &salt, &nonce)?;
+
+        let updated = edit_entry(
+            item.id,
+            &nonce,
+            &salt,
+            new_data,
+            email_enc,
+            password_enc,
+            notes_enc,
+            json_path,
+        )?;
+
+        if updated {
+            return Ok(item.clone());
+        }
+    }
+
+    Err(anyhow!("Item with id {} not found", argid))
 }
 
 fn decrypt_things(
@@ -138,7 +193,7 @@ pub fn copy(argid: u8, vaultpass: &[u8], which: &str, json_path: &str) -> Result
                 println!("Clipboard content will be deleted after 15 seconds...");
                 for i in (1..=15).rev() {
                     print!("{i}");
-                    use std::io::{Write, stdout};
+                    use std::io::{stdout, Write};
                     stdout().flush().unwrap();
 
                     thread::sleep(Duration::from_secs(1));
@@ -151,7 +206,7 @@ pub fn copy(argid: u8, vaultpass: &[u8], which: &str, json_path: &str) -> Result
                     clip.set_contents(password_str.clone())
                         .map_err(|e| anyhow!("Failed to copy to clipboard: {}", e))?;
                     print!("{i} ");
-                    use std::io::{Write, stdout};
+                    use std::io::{stdout, Write};
                     stdout().flush().unwrap();
 
                     thread::sleep(Duration::from_secs(1));

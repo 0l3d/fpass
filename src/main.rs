@@ -5,14 +5,14 @@ mod encrypt;
 mod password;
 
 use std::{
-    fs::{File, create_dir_all},
+    fs::{create_dir_all, File},
     io::Write,
     path::PathBuf,
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
-use cli::{add, copy, find, input, list, master_input, show};
+use cli::{add, copy, edit, find, input, list, master_input, show};
 use db::{add_entry, delete_entry};
 
 #[derive(Parser, Debug)]
@@ -50,15 +50,16 @@ enum Commands {
         /// ID of the entry
         id: u8,
     },
-    /// Copy an entry field to clipboard (not yet implemented)
+    /// Copy an entry field to clipboard
     Copy {
         /// ID of the entry
         id: u8,
         /// Field to copy (password/email)
         field: String,
     },
-    // Edit an entry field.
+    /// Edit an entry field.
     Edit {
+        /// ID of the entry
         id: u8,
     },
 }
@@ -134,7 +135,10 @@ fn main() -> Result<()> {
             let password = master_input("Master Password: ")?;
             copy(id, password.as_bytes(), &field, &json_path)?;
         }
-        Commands::Edit { id } => {}
+        Commands::Edit { id } => {
+            let password = master_input("Master Password: ")?;
+            edit(id, password.as_bytes(), &json_path)?;
+        }
     }
 
     Ok(())

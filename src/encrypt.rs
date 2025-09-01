@@ -1,8 +1,8 @@
 use aes_gcm::{
-    Aes256Gcm, Key, Nonce,
     aead::{Aead, KeyInit},
+    Aes256Gcm, Key, Nonce,
 };
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 use crate::password;
 
@@ -14,8 +14,8 @@ pub fn encrypt(
     salt_bytes: &[u8],
     nonce_bytes: &[u8],
 ) -> Result<Vec<u8>> {
-    let key = password::derive_key(password, &salt_bytes)?;
-    let nonce = Nonce::from_slice(&nonce_bytes);
+    let key = password::derive_key(password, salt_bytes)?;
+    let nonce = Nonce::from_slice(nonce_bytes);
     let ky = Key::<Aes256Gcm>::from_slice(&key);
     let cipher = Aes256Gcm::new(ky);
     cipher

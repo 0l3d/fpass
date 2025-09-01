@@ -1,9 +1,9 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
 use std::fs::{self, read_to_string, write};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DataSchema {
     pub id: u8,
     pub nonce: Vec<u8>,
@@ -16,7 +16,7 @@ pub struct DataSchema {
 
 pub fn get_json(path: &str) -> Result<Vec<DataSchema>> {
     let json_file =
-        read_to_string(&path).map_err(|e| anyhow!("Failed to read file {}: {}", path, e))?;
+        read_to_string(path).map_err(|e| anyhow!("Failed to read file {}: {}", path, e))?;
     let parsed = from_str::<Vec<DataSchema>>(&json_file)
         .map_err(|e| anyhow!("Failed to parse JSON: {}", e))?;
     Ok(parsed)
@@ -65,6 +65,40 @@ pub fn delete_entry(id: u8, json_path: &str) -> Result<bool> {
             .map_err(|e| anyhow!("Failed to serialize entries: {}", e))?;
         fs::write(json_path, updated_json)
             .map_err(|e| anyhow!("Failed to write to file {}: {}", json_path, e))?;
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+
+pub fn edit_entry(
+    id: u8,
+    nonce: &[u8],
+    salt: &[u8],
+    data_name: String,
+    email: Vec<u8>,
+    password: Vec<u8>,
+    notes: Vec<u8>,
+    json_path: &str,
+) -> Result<bool> {
+    let file_content = read_to_string(json_path)
+        .map_err(|e| anyhow!("Failed to read file {}: {}", json_path, e))?;
+    let mut entries: Vec<DataSchema> =
+        from_str(&file_content).map_err(|e| anyhow!("Failed to parse JSON: {}", e))?;
+
+    if let Some(entry) = entries.iter_mut().find(|e| e.id == id) {
+        entry.salt = salt.to_vec();
+        entry.nonce = nonce.to_vec();
+        entry.data_name = data_name;
+        entry.email = email;
+        entry.password = password;
+        entry.notes = notes;
+
+        let updated_json = to_string_pretty(&entries)
+            .map_err(|e| anyhow!("Failed to serialize entries: {}", e))?;
+        write(json_path, updated_json)
+            .map_err(|e| anyhow!("Failed to write to file {}: {}", json_path, e))?;
+
         Ok(true)
     } else {
         Ok(false)
