@@ -1,7 +1,6 @@
-# fpass – CLI Password Manager
+# fpass - CLI Password Manager
 
-**fpass** is a fast, secure, and local command-line password manager written entirely in **Rust**.
-Your data is **locally encrypted** and **never leaves your system**. No cloud. No servers. No dependencies.
+**fpass** is a fast, secure, and local command-line password manager written entirely in **Rust**. No cloud. No servers. No dependencies.
 
 ---
 
@@ -70,13 +69,6 @@ fpass -h
 
 ---
 
-## Dependencies
-
-- Requires Rust toolchain to build.
-- No runtime dependencies.
-
----
-
 ## License
 
 Licensed under the GNU General Public License v3.0 (GPL-3.0).You are free to use, modify, and distribute this software under the terms of the GPLv3.
@@ -86,5 +78,5 @@ See the LICENSE file for full details.
 
 ## Author
 
-Created with in Rust by **0l3d**  
+Created by **0l3d**  
 Support me: [https://buymeacoffee.com/oled](https://buymeacoffee.com/oled)
