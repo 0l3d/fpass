@@ -1,6 +1,6 @@
 [package]
 name = "fpass"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2021"
 authors = ["0l3d"]
 description = "CLI Password Manager"
