@@ -6,7 +6,7 @@ authors = ["0l3d"]
 description = "CLI Password Manager"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/0l3d/fpass"
-keywords = ["password", "encryption", "rust", "terminal", "modern", "cli", "password manager", "argon"]
+keywords = ["password", "encryption", "rust", "terminal", "minimal"]
 categories = ["command-line-interface", "cryptography"]
 
 [profile.release]
