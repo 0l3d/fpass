@@ -78,5 +78,4 @@ See the LICENSE file for full details.
 
 ## Author
 
-Created by **0l3d**  
-Support me: [https://buymeacoffee.com/oled](https://buymeacoffee.com/oled)
+Created by **oled**  
