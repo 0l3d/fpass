@@ -17,7 +17,7 @@ cargo install fpass
 #### 1. Clone the repository
 
 ```sh
-git clone https://git.sr.ht/~oled/fpass
+git clone https://github.com/0l3d/fpass
 cd fpass
 ```
 
@@ -78,4 +78,4 @@ See the LICENSE file for full details.
 
 ## Author
 
-Created by **oled**  
+Created by **0l3d**  
